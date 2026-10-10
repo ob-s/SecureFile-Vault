@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Accountant Workspace - SecureFile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Include Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container { position: relative; height: 250px; width: 100%; }
+        .dashboard-panel { border: 1px solid #dee2e6; border-radius: 0.25rem; background: #fff; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .panel-title { font-weight: bold; font-size: 1.1rem; border-bottom: 2px solid #f8f9fa; padding-bottom: 10px; margin-bottom: 15px; }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold" href="#">SecureFile Analytics & Vault</a>
+            <div class="d-flex align-items-center text-white">
+                <span class="badge bg-primary me-3 text-uppercase">{{ session['role'] }}</span>
+                <span class="me-3">User: <strong>{{ session['username'] }}</strong></span>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} shadow-sm">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row">
+            <!-- Left Column: Visual Analytics -->
+            <div class="col-lg-5">
+                <div class="dashboard-panel">
+                    <div class="panel-title">Vault Activity (Current YTD)</div>
+                    <div class="chart-container">
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="dashboard-panel">
+                    <div class="panel-title">Security Threat Monitor</div>
+                    <div class="chart-container">
+                        <canvas id="threatChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Core File Operations -->
+            <div class="col-lg-7">
+                <div class="dashboard-panel" style="height: 100%;">
+                    <div class="d-flex justify-content-between align-items-center panel-title">
+                        <span>Encrypted Financial Ledgers</span>
+                        <a href="/upload" class="btn btn-primary btn-sm">+ Encrypt New File</a>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Document Name</th>
+                                    <th>Security Status</th>
+                                    <th>Integrity Fails</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if files %}
+                                    {% for file in files %}
+                                    <tr>
+                                        <td class="fw-medium">{{ file[1] }}</td>
+                                        <td>
+                                            {% if file[2] == 1 %}
+                                                <span class="badge bg-danger">LOCKED (Admin Review)</span>
+                                            {% else %}
+                                                <span class="badge bg-success">AES Protected</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ file[3] }} / 3</td>
+                                        <td class="text-end">
+                                            {% if file[2] == 1 %}
+                                                <button class="btn btn-secondary btn-sm" disabled>Locked</button>
+                                            {% else %}
+                                                <a href="/decrypt/{{ file[0] }}" class="btn btn-warning btn-sm">Decrypt</a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-muted">
+                                            No financial records currently stored.
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Configuration Scripts -->
+    <script>
+        // Placeholder data for Vault Activity
+        const ctxActivity = document.getElementById('activityChart').getContext('2d');
+        new Chart(ctxActivity, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Files Encrypted',
+                    data: [12, 19, 15, 25, 22, 30],
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // Placeholder data for Security Threats
+        const ctxThreat = document.getElementById('threatChart').getContext('2d');
+        new Chart(ctxThreat, {
+            type: 'bar',
+            data: {
+                labels: ['Failed Logins', 'Decryption Fails', 'File Lockouts'],
+                datasets: [{
+                    label: 'Security Events',
+                    data: [5, 2, 1],
+                    backgroundColor: ['#ffc107', '#fd7e14', '#dc3545']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    </script>
+</body>
+</html>

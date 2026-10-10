@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Blockchain Audit Ledger - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body class="bg-dark text-light min-vh-100">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-black mb-4 border-bottom border-danger border-3">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold text-danger" href="/admin/dashboard"><i class="bi bi-shield-lock-fill me-2"></i>System Administrator Oversight</a>
+            <div class="d-flex align-items-center">
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-light btn-sm me-3">Locked Files</a>
+                <a href="{{ url_for('admin_audit_logs') }}" class="btn btn-primary btn-sm me-3">Blockchain Audit Ledger</a>
+                <span class="me-3">Admin: <strong>{{ session['username'] }}</strong></span>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3><i class="bi bi-link-45deg me-2 text-warning"></i>Immutable Blockchain Audit Trail</h3>
+            
+            <!-- Live Integrity Verification Badge -->
+            <div>
+                {% if is_valid %}
+                    <span class="badge bg-success p-2 fs-6"><i class="bi bi-check-circle-fill me-1"></i> {{ message }}</span>
+                {% else %}
+                    <span class="badge bg-danger p-2 fs-6"><i class="bi bi-exclamation-triangle-fill me-1"></i> {{ message }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card bg-secondary border-0 shadow-lg">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0 font-monospace small">
+                        <thead>
+                            <tr class="text-uppercase text-muted">
+                                <th class="px-3">Block ID</th>
+                                <th>Timestamp</th>
+                                <th>Actor</th>
+                                <th>Action Performed</th>
+                                <th>Status</th>
+                                <th class="px-3">Cryptographic Block Hash</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if logs %}
+                                {% for log in logs %}
+                                <tr>
+                                    <td class="px-3 fw-bold text-warning">#{{ log[0] }}</td>
+                                    <td>{{ log[3] }}</td>
+                                    <td>{{ log[1] if log[1] else 'SYSTEM' }}</td>
+                                    <td>{{ log[2] }}</td>
+                                    <td>
+                                        {% if log[4] == 'SUCCESS' %}
+                                            <span class="badge bg-success">SUCCESS</span>
+                                        {% elif log[4] == 'CRITICAL_BREACH' %}
+                                            <span class="badge bg-danger">BREACH DETECTED</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">{{ log[4] }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-3 text-muted text-truncate" style="max-width: 250px;" title="{{ log[5] }}">
+                                        {{ log[5] }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No audit blocks recorded yet.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - SecureFile Vault</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Include Bootstrap Icons for a polished look -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <style>
+        .split-left {
+            /* Deep, professional corporate gradient */
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            color: white;
+        }
+        .glass-panel {
+            /* Modern "Glassmorphism" effect for the feature cards */
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            transition: transform 0.3s ease;
+        }
+        .glass-panel:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .form-floating > .form-control:focus ~ label::after {
+            background-color: transparent !important;
+        }
+    </style>
+</head>
+<body class="vh-100 m-0 bg-light">
+    <div class="row h-100 g-0">
+        <!-- LEFT COLUMN: Branding & Security Features -->
+        <div class="col-lg-5 d-none d-lg-flex split-left flex-column justify-content-center align-items-center p-5 text-center shadow-lg">
+            <i class="bi bi-shield-lock-fill display-1 mb-3 text-info"></i>
+            <h1 class="fw-bold mb-3">SecureFile Vault</h1>
+            <p class="lead mb-5" style="max-width: 400px;">Enterprise-grade cryptographic protection for sensitive financial ledgers.</p>
+            
+            <div class="w-100" style="max-width: 400px;">
+                <div class="glass-panel p-4 mb-3 text-start">
+                    <h6 class="fw-bold"><i class="bi bi-cpu text-info me-2 fs-5"></i> AES-256-GCM Encryption</h6>
+                    <p class="small mb-0 text-light opacity-75">Military-grade protection for documents at rest.</p>
+                </div>
+                <div class="glass-panel p-4 mb-3 text-start">
+                    <h6 class="fw-bold"><i class="bi bi-fingerprint text-success me-2 fs-5"></i> SHA-256 Integrity</h6>
+                    <p class="small mb-0 text-light opacity-75">Cryptographic tamper detection and continuous auditing.</p>
+                </div>
+                <div class="glass-panel p-4 text-start">
+                    <h6 class="fw-bold"><i class="bi bi-phone-vibrate text-warning me-2 fs-5"></i> Zero-Trust MFA</h6>
+                    <p class="small mb-0 text-light opacity-75">Mandatory Google Authenticator hardware verification.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Registration Form -->
+        <div class="col-lg-7 d-flex align-items-center justify-content-center">
+            <div class="w-100" style="max-width: 450px; padding: 20px;">
+                
+                <div class="text-center mb-5 d-lg-none">
+                    <i class="bi bi-shield-lock-fill display-4 text-primary mb-2"></i>
+                    <h2 class="fw-bold">SecureFile Vault</h2>
+                </div>
+
+                <div class="text-center mb-4">
+                    <h3 class="fw-bold text-dark">Create Accountant Profile</h3>
+                    <p class="text-muted">Initialize your secure workspace</p>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm border-0" role="alert">
+                                <i class="bi bi-info-circle-fill me-2"></i>{{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST" class="card shadow-sm p-4 p-md-5 border-0 rounded-4 bg-white">
+                    
+                    <div class="form-floating mb-4">
+                        <input type="text" class="form-control bg-light border-0" id="username" name="username" placeholder="Employee Username" required autofocus>
+                        <label for="username" class="text-muted"><i class="bi bi-person me-2"></i>Accountant Username</label>
+                    </div>
+                    
+                    <div class="form-floating mb-4">
+                        <input type="password" class="form-control bg-light border-0" id="password" name="password" placeholder="Password" required>
+                        <label for="password" class="text-muted"><i class="bi bi-key me-2"></i>Master Password</label>
+                    </div>
+
+                    <!-- Psychological Security Element -->
+                    <div class="mb-4 form-check text-start p-3 bg-light rounded border">
+                        <input type="checkbox" class="form-check-input ms-1 mt-2" id="mfaCheck" checked disabled>
+                        <label class="form-check-label small text-muted ms-2" for="mfaCheck">
+                            I acknowledge that <strong>Google Authenticator MFA</strong> setup is mandatory upon profile creation.
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100 mb-4 fw-bold shadow-sm py-3">
+                        <i class="bi bi-person-plus-fill me-2"></i> Initialize Profile
+                    </button>
+                    
+                    <div class="text-center text-muted">
+                        Already have clearance? <a href="{{ url_for('login') }}" class="text-decoration-none fw-bold text-primary">Sign In here</a>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
