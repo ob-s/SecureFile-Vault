@@ -119,3 +119,47 @@ SecureFile-Vault/
 │   └── admin_audit.html           # Admin Blockchain Audit Ledger & CSV compliance exporter
 │
 └── README.md                      # Project documentation
+
+## 🚀 Installation & Setup Guide
+
+### 1. Clone the Repository & Install Dependencies
+```bash
+git clone [https://github.com/ob-s/SecureFile-Vault.git](https://github.com/ob-s/SecureFile-Vault.git)
+cd SecureFile-Vault
+pip install flask cryptography pyotp qrcode Pillow werkzeug
+```
+
+### 2. Initialize the Database & Seed Accounts
+Run the application once to build the SQLite schema, or run the setup scripts in sequence:
+```bash
+python app.py
+# Press Ctrl+C after initialization, then run:
+python seed_users.py
+python upgrade_db.py
+python upgrade_blockchain_db.py
+```
+
+### 3. Provision MFA for the Seeded Administrator
+To scan the Google Authenticator QR code for the default `administrator` account:
+```bash
+python show_admin_mfa.py
+```
+
+### 4. Launch the Server
+```bash
+python app.py
+```
+Access the application in your browser at: `http://127.0.0.1:5000`
+
+---
+
+## 🔑 Default Test Credentials
+
+| Username | Role | Default Password | MFA Requirement |
+| :--- | :--- | :--- | :--- |
+| **`administrator`** | System Admin | `AdminPass2026!` | Scan via `show_admin_mfa.py` |
+| **`mike`** | Accountant | `AccPass2026!` | Scan via MFA utility or register new user |
+| **`berry`** | Accountant | `AccPass2026!` | Scan via MFA utility or register new user |
+| **`moka`** | Accountant | `AccPass2026!` | Scan via MFA utility or register new user |
+
+*(Note: Registering a brand-new accountant via `/register` automatically displays the MFA QR code in the browser.)*
