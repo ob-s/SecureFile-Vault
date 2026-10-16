@@ -1,4 +1,5 @@
 import os
+import csv
 import sqlite3
 import hashlib
 import pyotp
@@ -174,7 +175,7 @@ def admin_dashboard():
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
     
-    # Fetch all globally locked files needing Admin review
+    # 1. Fetch all globally locked files needing Admin review
     cursor.execute('''
         SELECT f.file_id, f.filename, u.username, f.failed_decryption_attempts 
         FROM files f
@@ -182,9 +183,116 @@ def admin_dashboard():
         WHERE f.requires_admin = 1
     ''')
     locked_files = cursor.fetchall()
+    
+    # 2. Fetch all users for account & password management
+    cursor.execute('''
+        SELECT user_id, username, role, failed_attempts, is_locked 
+        FROM users
+        ORDER BY role ASC, username ASC
+    ''')
+    users_list = cursor.fetchall()
     conn.close()
     
-    return render_template('admin_dashboard.html', files=locked_files)
+    return render_template('admin_dashboard.html', files=locked_files, users=users_list)
+
+@app.route('/admin/reset-password/<int:target_user_id>', methods=['POST'])
+def admin_reset_password(target_user_id):
+    if 'user_id' not in session or session.get('role') != 'Admin':
+        return redirect(url_for('login'))
+        
+    new_password = request.form.get('new_password')
+    if not new_password:
+        flash("Password cannot be empty.", "danger")
+        return redirect(url_for('admin_dashboard'))
+        
+    hashed_pw = generate_password_hash(new_password)
+    
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT username FROM users WHERE user_id = ?", (target_user_id,))
+    user_record = cursor.fetchone()
+    
+    if user_record:
+        target_username = user_record[0]
+        # Reset password AND automatically unlock the user's account if they were locked out
+        cursor.execute('''
+            UPDATE users 
+            SET password_hash = ?, failed_attempts = 0, is_locked = 0 
+            WHERE user_id = ?
+        ''', (hashed_pw, target_user_id))
+        conn.commit()
+        
+        # Record the administrative override in the Blockchain
+        log_audit_event(session['user_id'], f"ADMIN_PASSWORD_RESET: {target_username}", "SUCCESS")
+        flash(f"Password for '{target_username}' has been reset and account unlocked.", "success")
+    else:
+        flash("User not found.", "danger")
+        
+    conn.close()
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/export-logs')
+def export_audit_logs():
+    if 'user_id' not in session or session.get('role') != 'Admin':
+        return redirect(url_for('login'))
+        
+    # Get timeframe filter from query param: '7' (1 week), '14' (2 weeks), or 'all'
+    days_filter = request.args.get('days', '7')
+    
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    
+    if days_filter in ['7', '14']:
+        cutoff_date = (datetime.datetime.now() - datetime.timedelta(days=int(days_filter))).strftime("%Y-%m-%d %H:%M:%S")
+        cursor.execute('''
+            SELECT a.log_id, a.timestamp, u.username, a.action, a.status, a.previous_hash, a.block_hash 
+            FROM audit_logs a
+            LEFT JOIN users u ON a.user_id = u.user_id
+            WHERE a.timestamp >= ?
+            ORDER BY a.log_id DESC
+        ''', (cutoff_date,))
+        filename_suffix = f"past_{days_filter}_days"
+    else:
+        cursor.execute('''
+            SELECT a.log_id, a.timestamp, u.username, a.action, a.status, a.previous_hash, a.block_hash 
+            FROM audit_logs a
+            LEFT JOIN users u ON a.user_id = u.user_id
+            ORDER BY a.log_id DESC
+        ''')
+        filename_suffix = "complete_history"
+        
+    logs = cursor.fetchall()
+    conn.close()
+    
+    # Generate the CSV file in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write standard audit headers
+    writer.writerow(['Block ID', 'Timestamp', 'Actor (Username)', 'Action Performed', 'Status', 'Previous Block Hash', 'Cryptographic Block Hash'])
+    
+    for log in logs:
+        log_id, timestamp, username, action, status, prev_hash, block_hash = log
+        actor = username if username else 'SYSTEM'
+        writer.writerow([f"#{log_id}", timestamp, actor, action, status, prev_hash, block_hash])
+        
+    # Record the export action in the blockchain
+    log_audit_event(session['user_id'], f"EXPORT_AUDIT_LOGS ({filename_suffix})", "SUCCESS")
+    
+    # Convert string buffer to bytes for Flask send_file
+    mem = io.BytesIO()
+    mem.write(output.getvalue().encode('utf-8'))
+    mem.seek(0)
+    output.close()
+    
+    timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    return send_file(
+        mem,
+        as_attachment=True,
+        download_name=f"blockchain_audit_log_{filename_suffix}_{timestamp_str}.csv",
+        mimetype='text/csv'
+    )
 
 @app.route('/admin/audit-logs')
 def admin_audit_logs():
